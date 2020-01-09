@@ -1,0 +1,65 @@
+rule alpha_multiple_rar:
+    input:
+        biom = "core/taxa_plots/table_filter.biom",
+        summarize = "core/taxa_plots/summarized_table.tsv"
+    output:
+        touch("core/{bracket}_alpha_multiple_rar.done")
+    shell:
+        " module load {config[modules][python2]} &&"
+        " DEPTH=$(python py_functions/utils/get_depth_min_max.py {input.summarize} '0' {config[depth_min_val]}) &&"
+        " MAX=$(python py_functions/utils/get_depth_min_max.py {input.summarize} '2' {config[depth_min_val]}) &&"
+        " STEP=$(($MAX-10/500)) &&"
+        " multiple_rarefactions.py"
+        " -i {input.biom}"
+        " -m $((10 + $DEPTH/50 * ({wildcards.bracket}-1)))"
+        " -x $((10 + $DEPTH/50 * ({wildcards.bracket})))"
+        " -s $STEP"
+        " -n 10"
+        " -o core/{wildcards.bracket}_multiple_rarefaction_out/"
+
+
+rule alpha_rar:
+    input:
+        "core/{bracket}_alpha_multiple_rar.done",
+        tree = config["open_ref"]["tree"]
+    output:
+        touch("core/{bracket}_alpha_rar.done"),
+    shell:
+        "module load {config[modules][python2]} &&"
+        " alpha_diversity.py"
+        " -i core/{wildcards.bracket}_multiple_rarefaction_out/"
+        " -o core/{wildcards.bracket}_alpha_div_out/"
+        " -t {input.tree}"
+        " --metrics {config[metrics_rar]}"
+
+
+rule mv_alpha_rar_out:
+    input:
+        expand("core/{bracket}_alpha_rar.done", bracket = range(1,51)),
+    output:
+        touch("core/mv_multiple_rar_out.done"),
+    shell:
+        "mkdir -p core/alpha_div_out && mv -n core/*_alpha_div_out/* core/alpha_div_out && rm -rf core/*_alpha_div_out/ core/*.done core/*rarefaction_out/"
+
+
+rule collate_alpha:
+    input:
+        "core/mv_multiple_rar_out.done",
+    output:
+        expand("core/livrable_{{timestamp}}/alpha/rarefaction/{m}.txt", m = config["metrics"])
+    shell:
+        "module load {config[modules][python2]} &&"
+        " collate_alpha.py"
+        " -i core/alpha_div_out/"
+        " -o core/livrable_{wildcards.timestamp}/alpha/rarefaction/"
+        
+rule alpha_div_rar_all_metrics:
+    input:
+        expand("core/livrable_{{timestamp}}/alpha/rarefaction/{m}.txt", m = config["metrics"])
+    output:
+        "core/livrable_{timestamp}/alpha/rarefaction/alpha_div_rar_all_metrics.xlsx"
+    shell:
+        "module load {config[modules][R]} &&"
+        " Rscript scripts/merge_alpha_div_metrics.R {output}"
+
+

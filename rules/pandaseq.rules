@@ -1,0 +1,22 @@
+rule pandaseq:
+    input:
+        R1 = "fastq/trimmed/{sample}.R1.fastq.gz",
+        R2 = "fastq/trimmed/{sample}.R2.fastq.gz"
+    output:
+        "fasta/unlabeled/{sample}.fasta"
+    threads: config["threads"]["all"]
+    log:
+        "logs/panda/{sample}_fasta.log"
+    shell:
+        "module load {config[modules][pandaseq]} &&"
+        " pandaseq"
+        " -f {input.R1}"
+        " -r {input.R2}"
+        " -w {output}"
+        " -B"
+        " -A simple_bayesian"
+        " -t 0.9"
+        " -T {threads}"
+        " -g {log}"
+
+

@@ -1,0 +1,19 @@
+rule add_qiime_labels:
+    input:
+        files = expand("fastq/trimmed/{s}.fasta", s = config["fasta"]),
+        mapping = "samplesheet.txt"
+    output:
+        "fasta/combined_seqs.fna"
+    log:
+        stdout = "logs/qiime/add_qiime_labels.log",
+        stderr = "logs/qiime/add_qiime_labels.err"
+    shell:
+        "module load {config[modules][python2]} &&"
+        " add_qiime_labels.py"
+        " -m {input.mapping}"
+        " -n 1"
+        " -i fasta/unlabeled/"
+        " -c {config[params_add_qiime_labels][mapping]}"
+        " -o fasta"
+        "> {log.stdout} 2> {log.stderr}"
+

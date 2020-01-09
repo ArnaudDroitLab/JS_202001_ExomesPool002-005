@@ -1,0 +1,24 @@
+rule abundance:
+    input:
+        norar = "core/taxa_plots/table_norar_sorted.biom",
+        rar = "core/taxa_plots/table_rar_sorted.biom"
+    output:
+        "core/livrable_{timestamp}/abundance/{rar_long}/{abs_rel_long}/count_{taxo}_L{level}_{rar}_{absrel}.txt"
+    run:
+        shell("module load {config[modules][python2]}")
+        if wildcards.rar == 'rar':
+            if wildcards.absrel == 'rel':
+                shell("module load {config[modules][python2]} && summarize_taxa.py -i {input.rar} -o core/taxa_plots -L {wildcards.level}")
+                shell("./scripts/correct_taxo.sh core/taxa_plots/table_rar_sorted_L{wildcards.level}.txt > {output}")
+            if wildcards.absrel == 'abs':
+                shell("module load {config[modules][python2]} && summarize_taxa.py -i {input.rar} -o core/taxa_plots -L {wildcards.level} -a --suppress_biom_table_output")
+                shell("./scripts/correct_taxo.sh core/taxa_plots/table_rar_sorted_L{wildcards.level}.txt > {output}")
+        if wildcards.rar == 'norar':
+            if wildcards.absrel == 'rel':
+                shell("module load {config[modules][python2]} && summarize_taxa.py -i {input.norar} -o core/taxa_plots -L {wildcards.level} --suppress_biom_table_output")
+                shell("./scripts/correct_taxo.sh core/taxa_plots/table_norar_sorted_L{wildcards.level}.txt > {output}")
+            if wildcards.absrel == 'abs':
+                shell("module load {config[modules][python2]} && summarize_taxa.py -i {input.norar} -o core/taxa_plots -L {wildcards.level} -a --suppress_biom_table_output")
+                shell("./scripts/correct_taxo.sh core/taxa_plots/table_norar_sorted_L{wildcards.level}.txt > {output}")
+
+

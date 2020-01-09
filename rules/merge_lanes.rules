@@ -1,0 +1,10 @@
+configfile: "config.yaml"
+
+rule merge_lanes:
+    input:
+        lambda wildcards: config["units"][wildcards.units]
+    output:
+        "fastq/merge/{units}.fastq.gz"
+    shell:
+        "zcat {input} | gzip -f > {output}"
+

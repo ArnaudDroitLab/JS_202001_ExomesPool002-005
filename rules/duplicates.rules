@@ -1,0 +1,16 @@
+rule MarkDuplicates:
+    input:
+        "bam/sort/{sample}.bam"
+    output:
+        bam="bam/dup/{sample}.bam",
+        metrics="bam/dup/{sample}_metrics.txt"
+    log:
+        stdout = "logs/dup/{sample}.out",
+        stderr = "logs/dup/{sample}.err"
+    shell:
+        " module load {config[modules][picard]} && "
+        " java -jar -Xmx24g $EBROOTPICARD/picard.jar MarkDuplicates "
+        " I={input}"
+        " O={output.bam}"
+        " M={output.metrics}"
+        " > {log.stdout} 2> {log.stderr}"

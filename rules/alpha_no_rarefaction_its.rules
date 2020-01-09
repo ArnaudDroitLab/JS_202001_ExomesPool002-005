@@ -1,0 +1,22 @@
+rule alpha_no_rar:
+    input:
+        biom = config["open_ref"]["biom_input_its"],
+    output:
+        "core/livrable_{timestamp}/alpha/no_rarefaction/{metric}.tsv"
+    shell:
+        "module load {config[modules][python2]} &&"
+        " alpha_diversity.py"
+        " -i {input.biom}"
+        " -o {output}"
+        " --metrics {wildcards.metric}"
+
+rule alpha_no_rar_merged:
+    input:
+        expand("core/livrable_{{timestamp}}/alpha/no_rarefaction/{m}.tsv", m = config["metrics_its"])
+    output:
+        "core/livrable_{timestamp}/alpha/no_rarefaction/alpha_div_metrics.txt"
+    shell:
+        "module load {config[modules][R]} &&"
+        " Rscript scripts/merge_metrics.R {input} {output}"
+
+

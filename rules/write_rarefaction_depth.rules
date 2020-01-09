@@ -1,0 +1,9 @@
+rule write_rarefaction_depth:
+    input:
+        "core/taxa_plots/summarized_table.tsv"
+    output:
+        expand("core/livrable_{timestamp}/rarefaction_depth.txt", timestamp = config["timestamp"])
+    shell:
+        " DEPTH=$(python py_functions/utils/get_depth_min_max.py {input} '0' {config[depth_min_val]}) &&"
+        " echo $DEPTH > {output}"
+

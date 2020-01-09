@@ -1,0 +1,13 @@
+configfile: "config.yaml"
+
+rule merge_lanes:
+    input:
+        expand("{{dir}}/{{sample}}.{l}.{{R1_2}}.fastq.gz", l = config["lanes"])
+    output:
+        "{dir}/merged_{sample}.{R1_2}.fastq.gz"
+    run:
+        if {wildcards.R1_2} == 'R1':
+            shell("zcat {dir}/{sample}.*.R1.fastq.gz | gzip -f > {output}")
+        elif {wildcards.R1_2} == 'R2':
+            shell("zcat {dir}/{sample}.*.R2.fastq.gz | gzip -f > {output}")
+

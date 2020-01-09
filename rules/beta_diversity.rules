@@ -1,0 +1,70 @@
+rule beta_diversity_rar:
+    input:
+        rar = "core/taxa_plots/table_rar.biom",
+        norar = "core/taxa_plots/table_norar.biom"
+    output:
+        "core/livrable_{timestamp}/beta/{rar_norar}/{w_uw}/{w_uw}_unifrac_table_{r_nr}.txt"
+    run:
+        if ( wildcards.r_nr == "rar"):
+            if wildcards.w_uw == 'weighted':
+                shell("module load {config[modules][python2]} &&"
+                      " beta_diversity.py"
+                      " -i {input.rar}"
+                      " -o core/livrable_{wildcards.timestamp}/beta/{wildcards.rar_norar}/{wildcards.w_uw}/"
+                      " --metrics weighted_unifrac"
+                      " -t {config[open_ref][tree]}")
+            if wildcards.w_uw == 'unweighted':
+                shell("module load {config[modules][python2]} &&"
+                      " beta_diversity.py"
+                      " -i {input.rar}"
+                      " -o core/livrable_{wildcards.timestamp}/beta/{wildcards.rar_norar}/{wildcards.w_uw}/"
+                      " --metrics unweighted_unifrac"
+                      " -t {config[open_ref][tree]}")
+        if (wildcards.r_nr == "norar"):
+            if wildcards.w_uw == 'weighted':
+                shell("module load {config[modules][python2]} &&"
+                      " beta_diversity.py"
+                      " -i {input.norar}"
+                      " -o core/livrable_{wildcards.timestamp}/beta/{wildcards.rar_norar}/{wildcards.w_uw}/"
+                      " --metrics weighted_unifrac"
+                      " -t {config[open_ref][tree]}")
+            if wildcards.w_uw == 'unweighted':
+                shell("module load {config[modules][python2]} &&"
+                      " beta_diversity.py"
+                      " -i {input.norar}"
+                      " -o core/livrable_{wildcards.timestamp}/beta/{wildcards.rar_norar}/{wildcards.w_uw}/"
+                      " --metrics unweighted_unifrac"
+                      " -t {config[open_ref][tree]}")
+
+
+rule beta_div_rar_principal_coordinates:
+    input:
+        rar = "core/livrable_{timestamp}/beta/rarefaction/{w_uw}/{w_uw}_unifrac_table_rar.txt",
+        norar = "core/livrable_{timestamp}/beta/no_rarefaction/{w_uw}/{w_uw}_unifrac_table_norar.txt"
+    output:
+        "core/livrable_{timestamp}/beta/{rar_norar}/{w_uw}/{w_uw}_unifrac_pc_{r_nr}.txt"
+    run:
+        if wildcards.rar_norar == 'rarefaction' and wildcards.r_nr == 'rar': 
+            if wildcards.w_uw == 'weighted':
+                shell("module load {config[modules][python2]} &&"
+                      " principal_coordinates.py"
+                      " -i {input.rar}"
+                      " -o {output}")
+            if wildcards.w_uw == 'unweighted':
+                shell("module load {config[modules][python2]} &&"
+                      " principal_coordinates.py"
+                      " -i {input.rar}"
+                      " -o {output}")
+        if wildcards.rar_norar == 'no_rarefaction' and  wildcards.r_nr == 'norar':
+            if wildcards.w_uw == 'weighted':
+                shell("module load {config[modules][python2]} &&"
+                      " principal_coordinates.py"
+                      " -i {input.rar}"
+                      " -o {output}")
+            if wildcards.w_uw == 'unweighted':
+                shell("module load {config[modules][python2]} &&"
+                      " principal_coordinates.py"
+                      " -i {input.rar}"
+                      " -o {output}")
+
+

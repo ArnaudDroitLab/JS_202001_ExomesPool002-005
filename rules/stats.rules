@@ -1,0 +1,12 @@
+rule stats:
+    input:
+        "bam/dup/{sample}.bam"
+    output:
+        "stats/{sample}.csv"
+    log:
+        stdout = "logs/stats/{sample}.out",
+        stderr = "logs/stats/{sample}.err"
+    shell:
+        "module load {config[modules][R]} && "
+        "Rscript scripts/extract_stats.R {wildcards.sample}"
+        " > {log.stdout} 2> {log.stderr}"

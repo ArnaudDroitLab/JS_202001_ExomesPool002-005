@@ -1,0 +1,74 @@
+rule bamtofastq:
+    input:
+        "bam/raw_data/{sample}.bam"
+    output:
+        R1 = "fastq/raw_data/{sample}_R1.fastq.gz",
+        R2 = "fastq/raw_data/{sample}_R2.fastq.gz"
+    log:
+        stdout = "logs/bamtofastq/{sample}.out",
+        stderr = "logs/bamtofastq/{sample}.err"
+    shell:
+        " module load {config[modules][picard]} && "
+        " java -jar -Xmx24g $EBROOTPICARD/picard.jar SamToFastq "
+        " VALIDATION_STRINGENCY=SILENT "
+        " INPUT={input}"
+        " FASTQ={output.R1}"
+        " SECOND_END_FASTQ={output.R2}"  
+        " > {log.stdout} 2> {log.stderr}"
+
+rule trimmomatic:
+    input:
+        "fastq/raw_data/{sample}_R1.fastq.gz",
+        "fastq/raw_data/{sample}_R2.fastq.gz"
+    output:
+        "fastq/trimmed/{sample}_R1.fastq.gz",
+        "fastq/trimmed/{sample}_R1_unpaired.fastq.gz",
+        "fastq/trimmed/{sample}_R2.fastq.gz",
+        "fastq/trimmed/{sample}_R2_unpaired.fastq.gz"
+    threads: config["threads"]["all"]
+    log:
+        stdout = "logs/trimmomatic/{sample}.out",
+        stderr = "logs/trimmomatic/{sample}.err"
+    shell:
+        "module load {config[modules][trimmomatic]} &&"
+        " java -jar -XX:ParallelGCThreads=1 -Xmx14G"
+        " $EBROOTTRIMMOMATIC/trimmomatic-0.36.jar "
+        " {config[params_trimmomatic][PE_SE]}"
+        " -threads {threads}"
+        " -{config[params_trimmomatic][phred]}"
+        " {input} {output}"
+        " ILLUMINACLIP:{config[params_trimmomatic][file_adaptors]}:2:30:10"
+        " TRAILING:{config[params_trimmomatic][trailing]}"
+        " {config[params_trimmomatic][others]}"
+        " > {log.stdout} 2> {log.stderr}"
+
+rule fastqc:
+    input:
+        "fastq/{dir}/{sample}.fastq.gz"
+    output:
+        "QC/{dir}/{sample}_fastqc.zip"
+    threads: config["threads"]["all"]
+    log:
+        stdout = "logs/fastqc/{dir}_{sample}.out",
+        stderr = "logs/fastqc/{dir}_{sample}.err"
+    shell:
+        "module load {config[modules][fastqc]} && "
+#        "/is3/projects/JS_PERSPECTIVE/S4-test_201809/cjb/Snakemake_Workflows/softwares/FastQC/fastqc "
+        "fastqc "
+        "-t {threads} {input} "
+        "-o QC/{wildcards.dir} "
+        "> {log.stdout} 2> {log.stderr}"
+
+rule multiqc:
+    input:
+        expand("QC/{{dir}}/{s}_{p}_fastqc.zip", s = config["samples"], p = ["R1","R2"])
+    output:
+        "QC/multiqc_{dir}.html"
+    log:
+        stdout = "logs/multiqc/{dir}.out",
+        stderr = "logs/multiqc/{dir}.err"
+    shell:
+        "module load {config[modules][multiqc]} && "
+        "source .venv/bin/activate && "
+        "multiqc -f -n QC/multiqc_{wildcards.dir} QC/{wildcards.dir} "
+        "> {log.stdout} 2> {log.stderr}"

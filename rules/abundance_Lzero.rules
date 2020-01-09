@@ -1,0 +1,27 @@
+rule abundance_Lzero:
+    input:
+        rar = "core/taxa_plots/table_rar_sorted.tsv",
+        norar = "core/taxa_plots/table_norar_sorted.tsv",
+        rar_norm = "core/taxa_plots/table_rar_sorted_normalized.tsv",
+        norar_norm = "core/taxa_plots/table_norar_sorted_normalized.tsv",
+        abund = expand("core/livrable_{t}/abundance/{s}", t = config["timestamp"], s = config["abundance"])
+    output:
+        "core/livrable_{timestamp}/abundance/{rar_long}/{abs_rel_long}/Count_otutable_L0_{rar}_{absrel}.txt"
+    run:
+        shell("module load {config[modules][python2]}")
+        if wildcards.rar == 'rar':
+            if wildcards.absrel == 'rel':
+                shell("./scripts/melt_taxonomy.py {input.rar_norm} {input.rar_norm}.tsv")
+                shell("./scripts/correct_taxo.sh {input.rar_norm}.tsv > {output}")
+            if wildcards.absrel == 'abs':
+                shell("./scripts/melt_taxonomy.py {input.rar} {input.rar}.tsv")
+                shell("./scripts/correct_taxo.sh {input.rar}.tsv > {output}")
+        if wildcards.rar == 'norar':
+            if wildcards.absrel == 'rel':
+                shell("./scripts/melt_taxonomy.py {input.norar_norm} {input.norar_norm}.tsv")
+                shell("./scripts/correct_taxo.sh {input.norar_norm}.tsv > {output}")
+            if wildcards.absrel == 'abs':
+                shell("./scripts/melt_taxonomy.py {input.norar} {input.norar}.tsv")
+                shell("./scripts/correct_taxo.sh {input.norar}.tsv > {output}")
+
+

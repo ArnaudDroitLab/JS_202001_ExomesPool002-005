@@ -1,0 +1,10 @@
+rule create_samplesheet_config:
+    input:
+        params = "config_params.txt",
+    output:
+        "config.yaml",
+        "samplesheet.txt",
+        touch("create_samplesheet_config.done")
+    shell:
+        "module load {config[module][python3]} &&"
+        " python3 scripts/samples_script.py --dir={config[raw_data_directory]}"

@@ -1,0 +1,12 @@
+rule coverageBed:
+    input:
+        bam="bam/sort/{sample}.bam",
+        bed="S31285117_Regions.bed"
+    output:
+        "coverages/{sample}_coverage.txt"
+    shell:
+        "module load {config[modules][bedtools]} && "
+        " coverageBed"
+        " -abam {input.bam} "
+        " -b {input.bed} "
+        " -d > {output}"

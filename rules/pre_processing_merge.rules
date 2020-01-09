@@ -1,0 +1,53 @@
+rule trimmomatic:
+    input:
+        "fastq/merge/{sample}.R1.fastq.gz",
+        "fastq/merge/{sample}.R2.fastq.gz"
+    output:
+        "fastq/trimmed/{sample}.R1.fastq.gz",
+        "fastq/trimmed/{sample}.R1_unpaired.fastq.gz",
+        "fastq/trimmed/{sample}.R2.fastq.gz",
+        "fastq/trimmed/{sample}.R2_unpaired.fastq.gz"
+    threads: config["threads"]["all"]
+    log:
+        stdout = "logs/trimmomatic/{sample}.out",
+        stderr = "logs/trimmomatic/{sample}.err"
+    shell:
+        "module load {config[modules][trimmomatic]} &&"
+        " java -jar -XX:ParallelGCThreads=1 -Xmx14G"
+        " $TRIMMOMATIC_JAR"
+        " {config[params_trimmomatic][PE_SE]}"
+        " -threads {threads}"
+        " -{config[params_trimmomatic][phred]}"
+        " {input} {output}"
+        " ILLUMINACLIP:{config[params_trimmomatic][file_adaptors]}:2:30:10"
+        " TRAILING:{config[params_trimmomatic][trailing]}"
+        " {config[params_trimmomatic][others]}"
+        " > {log.stdout} 2> {log.stderr}"
+
+rule fastqc:
+    input:
+        "fastq/{dir}/{sample}.fastq.gz"
+    output:
+        "QC/{dir}/{sample}_fastqc.zip"
+    threads: config["threads"]["all"]
+    log:
+        stdout = "logs/fastqc/{dir}_{sample}.out",
+        stderr = "logs/fastqc/{dir}_{sample}.err"
+    shell:
+        "module load {config[modules][fastqc]} && "
+        "fastqc -t {threads} {input} "
+        "-o QC/{wildcards.dir} "
+        "> {log.stdout} 2> {log.stderr}"
+
+rule multiqc:
+    input:
+        expand("QC/{{dir}}/{s}.{p}_fastqc.zip", s = config["fasta"], p = ["R1","R2"])
+    output:
+        "QC/multiqc_{dir}.html"
+    log:
+        stdout = "logs/multiqc/{dir}.out",
+        stderr = "logs/multiqc/{dir}.err"
+    shell:
+        "multiqc -f -n QC/multiqc_{wildcards.dir} QC/{wildcards.dir} "
+        "> {log.stdout} 2> {log.stderr}"
+

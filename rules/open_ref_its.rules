@@ -1,0 +1,17 @@
+
+rule open_ref:
+    input:
+        fasta = "fasta/combined_seqs.fna"
+    output:
+        biom = config["open_ref"]["biom_input_its"],
+    threads: config["threads"]["open_ref"]
+    shell:
+        "export TMP=$(pwd)/tmp_data_snakemake/ &&"
+        " module load {config[modules][python2]} &&"
+        " pick_open_reference_otus.py -i {input.fasta}" 
+        " -r {config[open_ref][reference_fp_its]}" 
+        " -o {config[open_ref][dir]} -f"
+        " -p {config[open_ref][param_unite]}"
+        " -a -O {threads}"
+        " --suppress_align_and_tree"
+        " --suppress_step4"

@@ -1,0 +1,9 @@
+rule tree:
+    input:
+        config["open_ref"]["tree"]
+    output:
+        expand("core/livrable_{timestamp}/phylogeny/tree.tre", timestamp = config["timestamp"])
+    shell:
+        "cp -f {input} {output}"
+
+

@@ -1,0 +1,78 @@
+rule summarized_table:
+    input:
+        biom = config["open_ref"]["biom_input_its"]
+    output:
+        "core/taxa_plots/summarized_table.tsv"
+    shell:
+        "module load {config[modules][python2]} &&"
+        " biom summarize-table -i {input.biom} > {output}"
+
+
+rule biom_filter:
+    input:
+        biom = config["open_ref"]["biom_input_its"],
+        summarize = "core/taxa_plots/summarized_table.tsv"
+    output:
+        "core/taxa_plots/table_filter.biom"
+    shell:
+        "module load {config[modules][python2]} &&"
+        " DEPTH=$(python py_functions/utils/get_depth_min_max.py {input.summarize} '0' {config[depth_min_val]}) &&"
+        " filter_samples_from_otu_table.py"
+        " -i {input.biom}"
+        " -o {output}"
+        " -n $DEPTH"
+
+rule biom_rar:
+    input:
+        biom = "core/taxa_plots/table_filter.biom",
+        summarize = "core/taxa_plots/summarized_table.tsv"
+    output:
+        "core/taxa_plots/table_rar.biom"
+    shell:
+        "module load {config[modules][python2]} &&"
+        " DEPTH=$(python py_functions/utils/get_depth_min_max.py {input.summarize} '0' {config[depth_min_val]}) &&"
+        " single_rarefaction.py"
+        " -i {input.biom}"
+        " -o {output}"
+        " -d $DEPTH"
+
+
+rule biom_norar:
+    input:
+        config["open_ref"]["biom_input_its"]
+    output:
+        "core/taxa_plots/table_norar.biom"
+    shell:
+        "ln -sf ../../{input} {output} "
+
+
+rule sort_biom:
+    input:
+        "core/taxa_plots/{sample}.biom"
+    output:
+        "core/taxa_plots/{sample}_sorted.biom"
+    shell:
+        "module load {config[modules][python2]} &&"
+        " sort_otu_table.py -i {input} -o {output}"
+
+
+rule convert_biom:
+    input:
+        "core/taxa_plots/{sample}_sorted.biom"
+    output:
+        "core/taxa_plots/{sample}_sorted.tsv"
+    shell:
+        "module load {config[modules][python2]} &&"
+        " biom convert -i {input} -o {output} --to-tsv --header-key taxonomy "
+
+
+rule normalized_table_biom:
+    input:
+        "core/taxa_plots/{sample}_sorted.biom"
+    output:
+        "core/taxa_plots/{sample}_sorted_normalized.biom"
+    shell:
+        "module load {config[modules][python2]} &&"
+        " biom normalize-table -i {input} -o {output} -r --axis sample "
+
+

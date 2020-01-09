@@ -1,0 +1,50 @@
+rule bwa_SE:
+    input:
+        "fastq/trimmed/{sample}.fastq.gz"
+    output:
+        "bam/sort/{sample}.bam"
+    threads: 8
+    log:
+        stdout = "logs/bwa_hs/{sample}.out",
+        stderr = "logs/bwa_hs/{sample}.err"
+    shell:
+        "module load {config[modules][bwa]} && "
+        "module load {config[modules][samtools]} && "
+        "bwa mem"
+        " -t {threads} "
+        " -R '@RG\\tID:{wildcards.sample}\\tSM:{wildcards.sample}'"
+        " {config[params_bwa][ref]}"
+        " {input}"
+        " | samtools sort -@ {threads} - > {output}"
+
+rule bwa_PE:
+    input:
+        "fastq/trimmed/{sample}_R1.fastq.gz",
+        "fastq/trimmed/{sample}_R2.fastq.gz",
+    output:
+        "bam/sort/{sample}.bam"
+    threads: 8
+    log:
+        stdout = "logs/bwa_hs/{sample}.out",
+        stderr = "logs/bwa_hs/{sample}.err"
+    shell:
+        "module load {config[modules][bwa]} && "
+        "module load {config[modules][samtools]} && "
+        "bwa mem"
+        " -t {threads} "
+        " -R '@RG\\tID:{wildcards.sample}\\tSM:{wildcards.sample}'"
+        " {config[params_bwa][ref]}"
+        " {input}"
+        " | samtools sort -@ {threads} - > {output}"
+
+rule bwa_index:
+    input:
+        "{sample}.bam"
+    output:
+        "{sample}.bam.bai"
+    log:
+        stdout = "logs/bwa_idx/{sample}.out",
+        stderr = "logs/bwa_idx/{sample}.err"
+    shell:
+        "module load {config[modules][samtools]} && "
+        " samtools index {input}"
