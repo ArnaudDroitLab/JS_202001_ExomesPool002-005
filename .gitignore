@@ -1,3 +1,4 @@
 *.bam
 *.fastq
 .venv/*
+bwa_index/*
