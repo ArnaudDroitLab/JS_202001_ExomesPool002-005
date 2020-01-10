@@ -1,0 +1,17 @@
+rule hsmetrics:
+    input:
+        "bam/dup/{sample}.bam"
+    output:
+        "picard/{sample}_hsMetrics.txt"
+    log:
+        stdout = "logs/collectHsMetrics/{sample}.out",
+        stderr = "logs/collectHsMetrics/{sample}.err"
+    shell:
+        " module load {config[modules][picard]} &&"
+        " java -jar -Xmx18g $EBROOTPICARD/picard.jar CollectHsMetrics"
+        " I={input}"
+        " O={output}"
+        " R={config[params_bwa][ref]}"
+        " BAIT_INTERVALS={config[baits]}"
+        " TARGET_INTERVALS={config[targets]}"
+        " > {log.stdout} 2> {log.stderr}"
