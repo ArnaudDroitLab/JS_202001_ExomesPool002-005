@@ -1,4 +1,9 @@
 *.bam
 *.fastq
+fastq/*
 .venv/*
 bwa_index/*
+*.out
+logs/*
+.snakemake/*
+QC/*
